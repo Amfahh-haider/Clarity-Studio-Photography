@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clarity Studio Photography - Pricing Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&amp;family=Playfair+Display:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0f0f12;
+      --surface-color: #1a1a24;
+      --text-color: #e8e5df;
+      --primary-action: #c8a45e;
+      --secondary-action: #6b6580;
+    }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg-color); color: var(--text-color); }
+
+    .grain-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    .glow-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary-action), transparent);
+      opacity: 0.4;
+    }
+
+    .card-surface {
+      background: var(--surface-color);
+      border: 1px solid rgba(200,164,94,0.1);
+      border-radius: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .card-surface:hover {
+      border-color: rgba(200,164,94,0.25);
+      box-shadow: 0 0 30px rgba(200,164,94,0.05);
+    }
+
+    .slider-track {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 6px; border-radius: 3px;
+      background: linear-gradient(90deg, var(--primary-action), var(--secondary-action));
+      outline: none; cursor: pointer;
+    }
+    .slider-track::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--primary-action);
+      border: 3px solid var(--bg-color);
+      box-shadow: 0 0 10px rgba(200,164,94,0.4);
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .slider-track::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .slider-track::-moz-range-thumb {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--primary-action); border: 3px solid var(--bg-color);
+      box-shadow: 0 0 10px rgba(200,164,94,0.4); cursor: pointer;
+    }
+
+    .counter-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(200,164,94,0.3);
+      background: transparent; color: var(--primary-action);
+      cursor: pointer; transition: all 0.2s; font-size: 18px;
+    }
+    .counter-btn:hover {
+      background: rgba(200,164,94,0.15);
+      border-color: var(--primary-action);
+    }
+
+    .total-display {
+      background: linear-gradient(135deg, rgba(200,164,94,0.12), rgba(107,101,128,0.08));
+      border: 1px solid rgba(200,164,94,0.2);
+      border-radius: 16px;
+    }
+
+    .cta-btn {
+      background: linear-gradient(135deg, var(--primary-action), #b8944e);
+      color: var(--bg-color); font-weight: 700; border: none;
+      border-radius: 12px; padding: 16px 32px;
+      cursor: pointer; transition: all 0.3s; font-size: 16px;
+      letter-spacing: 0.5px; position: relative; overflow: hidden;
+    }
+    .cta-btn::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .cta-btn:hover::after { left: 100%; }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(200,164,94,0.3); }
+
+    .album-option {
+      padding: 12px 16px; border-radius: 10px;
+      border: 1px solid rgba(200,164,94,0.15);
+      cursor: pointer; transition: all 0.3s; text-align: center;
+    }
+    .album-option.active {
+      border-color: var(--primary-action);
+      background: rgba(200,164,94,0.1);
+      box-shadow: 0 0 15px rgba(200,164,94,0.1);
+    }
+    .album-option:hover:not(.active) {
+      border-color: rgba(200,164,94,0.3);
+    }
+
+    .fade-up {
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp 0.6s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .font-display { font-family: 'Playfair Display', serif; }
+
+    .line-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .line-item:not(:last-child) { border-bottom: 1px solid rgba(200,164,94,0.08); }
+
+    .toast-msg {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--primary-action); color: var(--bg-color);
+      padding: 14px 28px; border-radius: 12px; font-weight: 600;
+      opacity: 0; transition: all 0.4s ease; z-index: 100; pointer-events: none;
+    }
+    .toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .section-number {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      color: var(--primary-action); text-transform: uppercase; opacity: 0.7;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-wrapper" class="w-full h-full overflow-auto">
+   <div class="grain-overlay"></div>
+   <div class="relative z-10 max-w-2xl mx-auto px-4 py-10 sm:py-16"><!-- Header -->
+    <header class="text-center mb-12 fade-up" style="animation-delay: 0.1s;">
+     <div class="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full" style="background: rgba(200,164,94,0.08); border: 1px solid rgba(200,164,94,0.15);"><i data-lucide="aperture" style="width:16px; height:16px; color: var(--primary-action);"></i> <span class="text-xs font-medium tracking-widest uppercase" style="color: var(--primary-action);" id="business-name-badge">Clarity Studio</span>
+     </div>
+     <h1 class="font-display text-3xl sm:text-5xl font-bold mb-3" id="main-heading" style="line-height:1.1;"><span id="tagline-text">Craft Your Perfect</span><br><span style="background: linear-gradient(135deg, var(--primary-action), #e8d5a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" id="tagline-accent">Package</span></h1>
+     <p class="text-sm opacity-50 max-w-sm mx-auto">Adjust the options below to build a custom quote tailored to your vision.</p>
+     <div class="glow-line mt-8 mx-auto" style="max-width: 200px;"></div>
+    </header><!-- Session Duration -->
+    <section class="card-surface p-6 sm:p-8 mb-5 fade-up" style="animation-delay: 0.2s;">
+     <div class="section-number mb-3">
+      01 — Session
+     </div>
+     <div class="flex justify-between items-end mb-5">
+      <div>
+       <h2 class="font-display text-xl font-semibold">Session Duration</h2>
+       <p class="text-xs opacity-40 mt-1">Hourly rate: $150 – $250</p>
+      </div>
+      <div class="text-right"><span class="text-2xl font-bold" style="color: var(--primary-action);" id="session-hours-display">2</span> <span class="text-xs opacity-50 ml-1">hours</span>
+      </div>
+     </div><input type="range" id="session-slider" class="slider-track" min="1" max="8" step="1" value="2">
+     <div class="flex justify-between text-xs opacity-30 mt-2"><span>1 hr</span><span>8 hrs</span>
+     </div>
+     <div class="mt-4 text-right"><span class="text-sm opacity-50">Subtotal:</span> <span class="ml-2 font-bold" id="session-subtotal">$350</span>
+     </div>
+    </section><!-- Editing -->
+    <section class="card-surface p-6 sm:p-8 mb-5 fade-up" style="animation-delay: 0.3s;">
+     <div class="section-number mb-3">
+      02 — Editing
+     </div>
+     <div class="flex justify-between items-end mb-5">
+      <div>
+       <h2 class="font-display text-xl font-semibold">Photo Editing</h2>
+       <p class="text-xs opacity-40 mt-1">$50 per retouched image</p>
+      </div>
+      <div class="flex items-center gap-3"><button class="counter-btn" id="edit-minus" aria-label="Decrease images">−</button> <span class="text-2xl font-bold min-w-[2ch] text-center" style="color: var(--primary-action);" id="edit-count">10</span> <button class="counter-btn" id="edit-plus" aria-label="Increase images">+</button>
+      </div>
+     </div>
+     <div class="text-right"><span class="text-sm opacity-50">Subtotal:</span> <span class="ml-2 font-bold" id="editing-subtotal">$500</span>
+     </div>
+    </section><!-- Album -->
+    <section class="card-surface p-6 sm:p-8 mb-5 fade-up" style="animation-delay: 0.4s;">
+     <div class="section-number mb-3">
+      03 — Album
+     </div>
+     <h2 class="font-display text-xl font-semibold mb-1">Photo Album</h2>
+     <p class="text-xs opacity-40 mb-5">Choose your album tier — or skip it</p>
+     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="album-options">
+      <div class="album-option active" data-album="none" data-price="0">
+       <div class="text-xs opacity-50 mb-1">
+        None
+       </div>
+       <div class="font-bold text-sm">
+        $0
+       </div>
+      </div>
+      <div class="album-option" data-album="basic" data-price="100">
+       <div class="text-xs opacity-50 mb-1">
+        Basic
+       </div>
+       <div class="font-bold text-sm">
+        $100
+       </div>
+      </div>
+      <div class="album-option" data-album="premium" data-price="200">
+       <div class="text-xs opacity-50 mb-1">
+        Premium
+       </div>
+       <div class="font-bold text-sm">
+        $200
+       </div>
+      </div>
+      <div class="album-option" data-album="deluxe" data-price="300">
+       <div class="text-xs opacity-50 mb-1">
+        Deluxe
+       </div>
+       <div class="font-bold text-sm">
+        $300
+       </div>
+      </div>
+     </div>
+     <div class="mt-4 text-right"><span class="text-sm opacity-50">Subtotal:</span> <span class="ml-2 font-bold" id="album-subtotal">$0</span>
+     </div>
+    </section><!-- Total -->
+    <section class="total-display p-6 sm:p-8 mb-5 fade-up" style="animation-delay: 0.5s;">
+     <div class="flex items-center gap-2 mb-4"><i data-lucide="receipt" style="width:18px; height:18px; color: var(--primary-action);"></i> <span class="font-display text-lg font-semibold">Estimate Breakdown</span>
+     </div>
+     <div id="breakdown-list" class="mb-4">
+      <div class="line-item"><span class="text-sm opacity-60">Session (2 hrs)</span> <span class="text-sm font-medium" id="line-session">$350</span>
+      </div>
+      <div class="line-item"><span class="text-sm opacity-60">Editing (10 images)</span> <span class="text-sm font-medium" id="line-editing">$500</span>
+      </div>
+      <div class="line-item"><span class="text-sm opacity-60">Album — None</span> <span class="text-sm font-medium" id="line-album">$0</span>
+      </div>
+     </div>
+     <div class="glow-line mb-4"></div>
+     <div class="flex justify-between items-end"><span class="font-display text-lg font-semibold">Total</span> <span class="font-display text-3xl sm:text-4xl font-bold" style="color: var(--primary-action);" id="grand-total">$850</span>
+     </div>
+    </section><!-- CTA -->
+    <div class="text-center fade-up" style="animation-delay: 0.6s;"><button class="cta-btn w-full sm:w-auto" id="cta-button"> <span id="cta-btn-text">Get Your Quote</span> <span class="ml-2">→</span> </button>
+     <p class="text-xs opacity-30 mt-4">Prices are estimates and may vary based on project scope.</p>
+    </div>
+    <footer class="text-center mt-12 mb-6 opacity-20 text-xs"><span id="footer-business-name">Clarity Studio Photography</span> · Pricing Calculator
+    </footer>
+   </div><!-- Toast -->
+   <div class="toast-msg" id="toast">
+    Quote details copied! ✨
+   </div>
+  </div>
+  <script>
+    // ---- Config & SDK ----
+    const defaultConfig = {
+      background_color: '#0f0f12',
+      surface_color: '#1a1a24',
+      text_color: '#e8e5df',
+      primary_action: '#c8a45e',
+      secondary_action: '#6b6580',
+      font_family: 'DM Sans',
+      font_size: 16,
+      business_name: 'Clarity Studio Photography',
+      tagline: 'Craft Your Perfect Package',
+      cta_text: 'Get Your Quote'
+    };
+
+    // ---- State ----
+    let sessionHours = 2;
+    let editCount = 10;
+    let albumPrice = 0;
+    let albumName = 'None';
+
+    // ---- Pricing Logic ----
+    function getSessionRate(hours) {
+      // Rate scales from $250/hr (1hr) down to $150/hr (8hrs)
+      return Math.round(250 - ((hours - 1) / 7) * 100);
+    }
+
+    function calculateAll() {
+      const rate = getSessionRate(sessionHours);
+      const sessionTotal = rate * sessionHours;
+      const editingTotal = editCount * 50;
+      const total = sessionTotal + editingTotal + albumPrice;
+
+      document.getElementById('session-hours-display').textContent = sessionHours;
+      document.getElementById('session-subtotal').textContent = '$' + sessionTotal.toLocaleString();
+      document.getElementById('edit-count').textContent = editCount;
+      document.getElementById('editing-subtotal').textContent = '$' + editingTotal.toLocaleString();
+      document.getElementById('album-subtotal').textContent = '$' + albumPrice.toLocaleString();
+
+      // Breakdown
+      document.getElementById('line-session').textContent = '$' + sessionTotal.toLocaleString();
+      document.querySelector('#breakdown-list .line-item:nth-child(1) .opacity-60').textContent = `Session (${sessionHours} hr${sessionHours > 1 ? 's' : ''} × $${rate})`;
+      document.getElementById('line-editing').textContent = '$' + editingTotal.toLocaleString();
+      document.querySelector('#breakdown-list .line-item:nth-child(2) .opacity-60').textContent = `Editing (${editCount} image${editCount !== 1 ? 's' : ''})`;
+      document.getElementById('line-album').textContent = '$' + albumPrice.toLocaleString();
+      document.querySelector('#breakdown-list .line-item:nth-child(3) .opacity-60').textContent = `Album — ${albumName}`;
+
+      document.getElementById('grand-total').textContent = '$' + total.toLocaleString();
+    }
+
+    // ---- Event Listeners ----
+    document.getElementById('session-slider').addEventListener('input', (e) => {
+      sessionHours = parseInt(e.target.value);
+      calculateAll();
+    });
+
+    document.getElementById('edit-minus').addEventListener('click', () => {
+      if (editCount > 0) { editCount--; calculateAll(); }
+    });
+    document.getElementById('edit-plus').addEventListener('click', () => {
+      if (editCount < 100) { editCount++; calculateAll(); }
+    });
+
+    document.querySelectorAll('.album-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.album-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        albumPrice = parseInt(opt.dataset.price);
+        albumName = opt.querySelector('.opacity-50').textContent;
+        calculateAll();
+      });
+    });
+
+    // CTA button — copies summary
+    document.getElementById('cta-button').addEventListener('click', () => {
+      const name = window.elementSdk?.config?.business_name || defaultConfig.business_name;
+      const total = document.getElementById('grand-total').textContent;
+      const lines = [...document.querySelectorAll('#breakdown-list .line-item')].map(li => {
+        const label = li.querySelector('.opacity-60').textContent;
+        const val = li.querySelector('.font-medium').textContent;
+        return `${label}: ${val}`;
+      });
+      const summary = `${name} — Quote\n${lines.join('\n')}\nTotal: ${total}`;
+
+      navigator.clipboard.writeText(summary).then(() => {
+        showToast('Quote copied to clipboard! ✨');
+      }).catch(() => {
+        showToast('Quote ready — ' + total);
+      });
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ---- Element SDK ----
+    function applyConfig(config) {
+      const bg = config.background_color || defaultConfig.background_color;
+      const surface = config.surface_color || defaultConfig.surface_color;
+      const text = config.text_color || defaultConfig.text_color;
+      const primary = config.primary_action || defaultConfig.primary_action;
+      const secondary = config.secondary_action || defaultConfig.secondary_action;
+      const font = config.font_family || defaultConfig.font_family;
+      const fontSize = config.font_size || defaultConfig.font_size;
+      const bizName = config.business_name || defaultConfig.business_name;
+      const tagline = config.tagline || defaultConfig.tagline;
+      const ctaText = config.cta_text || defaultConfig.cta_text;
+
+      document.documentElement.style.setProperty('--bg-color', bg);
+      document.documentElement.style.setProperty('--surface-color', surface);
+      document.documentElement.style.setProperty('--text-color', text);
+      document.documentElement.style.setProperty('--primary-action', primary);
+      document.documentElement.style.setProperty('--secondary-action', secondary);
+
+      document.body.style.background = bg;
+      document.body.style.color = text;
+      document.body.style.fontFamily = `${font}, 'DM Sans', sans-serif`;
+      document.body.style.fontSize = fontSize + 'px';
+
+      // Text content
+      const words = tagline.split(' ');
+      const accent = words.pop();
+      document.getElementById('tagline-text').textContent = words.join(' ') || 'Craft Your';
+      document.getElementById('tagline-accent').textContent = accent || 'Package';
+
+      const shortName = bizName.split(' ').slice(0, 2).join(' ');
+      document.getElementById('business-name-badge').textContent = shortName;
+      document.getElementById('footer-business-name').textContent = bizName;
+      document.getElementById('cta-btn-text').textContent = ctaText;
+
+      // Font sizes proportional
+      document.getElementById('main-heading').style.fontSize = `${fontSize * 2.5}px`;
+      document.querySelectorAll('.section-number').forEach(el => el.style.fontSize = `${fontSize * 0.69}px`);
+      document.querySelectorAll('.font-display.text-xl').forEach(el => el.style.fontSize = `${fontSize * 1.25}px`);
+
+      // Recolor surfaces
+      document.querySelectorAll('.card-surface').forEach(el => {
+        el.style.background = surface;
+        el.style.borderColor = primary + '1a';
+      });
+
+      // Recolor primary action elements
+      document.querySelectorAll('.counter-btn').forEach(el => {
+        el.style.color = primary;
+        el.style.borderColor = primary + '4d';
+      });
+      document.getElementById('grand-total').style.color = primary;
+      document.querySelectorAll('[style*="color: var(--primary-action)"]').forEach(el => {
+        el.style.color = primary;
+      });
+
+      // CTA button
+      const cta = document.getElementById('cta-button');
+      cta.style.background = `linear-gradient(135deg, ${primary}, ${secondary})`;
+      cta.style.color = bg;
+
+      // Album active state update
+      document.querySelectorAll('.album-option.active').forEach(el => {
+        el.style.borderColor = primary;
+        el.style.background = primary + '1a';
+      });
+
+      // Glow lines
+      document.querySelectorAll('.glow-line').forEach(el => {
+        el.style.background = `linear-gradient(90deg, transparent, ${primary}, transparent)`;
+      });
+
+      // Total display
+      const totalDisplay = document.querySelector('.total-display');
+      if (totalDisplay) {
+        totalDisplay.style.background = `linear-gradient(135deg, ${primary}1f, ${secondary}14)`;
+        totalDisplay.style.borderColor = primary + '33';
+      }
+
+      // Toast
+      document.getElementById('toast').style.background = primary;
+      document.getElementById('toast').style.color = bg;
+    }
+
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => { applyConfig(config); },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); }},
+          { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); }},
+          { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); }},
+          { get: () => config.primary_action || defaultConfig.primary_action, set: (v) => { config.primary_action = v; window.elementSdk.setConfig({ primary_action: v }); }},
+          { get: () => config.secondary_action || defaultConfig.secondary_action, set: (v) => { config.secondary_action = v; window.elementSdk.setConfig({ secondary_action: v }); }}
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => config.font_family || defaultConfig.font_family,
+          set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+        },
+        fontSizeable: {
+          get: () => config.font_size || defaultConfig.font_size,
+          set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+        }
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['business_name', config.business_name || defaultConfig.business_name],
+        ['tagline', config.tagline || defaultConfig.tagline],
+        ['cta_text', config.cta_text || defaultConfig.cta_text]
+      ])
+    });
+
+    // Init
+    lucide.createIcons();
+    calculateAll();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dc27d8ce05c21f2',t:'MTc3MzQ4MzA0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
